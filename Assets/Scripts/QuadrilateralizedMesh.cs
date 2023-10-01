@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 
 public abstract class QuadrilateralizedMesh<TSuper, TData> : MonoBehaviour where TSuper : QuadrilateralizedMesh<TSuper, TData>
@@ -9,8 +11,15 @@ public abstract class QuadrilateralizedMesh<TSuper, TData> : MonoBehaviour where
     private TSuper seChild;
     private TSuper swChild;
     private TData data;
+    private MeshWorker meshWorker;
 
     public bool IsUpdating { get; private set; }
+
+    // Unity message
+    private void Start()
+    {
+        meshWorker = GetMeshWorker();
+    }
 
     // Unity Message
     private void Update()
@@ -29,8 +38,18 @@ public abstract class QuadrilateralizedMesh<TSuper, TData> : MonoBehaviour where
         State.Ready => TryCreateMesh(),
         State.Active => TryStartSplitting(),
         State.Split => TryMerge(),
+        State.Initial => TrySchedule(),
         _ => false,
     };
+
+    private bool TrySchedule()
+    {
+        meshWorker.ScheduleMeshData(this as TSuper);
+
+        state = State.Generating;
+
+        return true;
+    }
 
     private bool TryMerge()
     {
@@ -116,7 +135,7 @@ public abstract class QuadrilateralizedMesh<TSuper, TData> : MonoBehaviour where
     /// <remarks>Will be called from the Unity thread!</remarks>
     /// <returns></returns>
     protected abstract bool TryCreateMesh(TData data);
-
+    protected abstract MeshWorker GetMeshWorker();
     protected abstract bool CanRecurse();
     protected abstract TSuper CreateChild(Quadrant quadrant);
     public abstract void ToggleVisibility(bool visible);
@@ -124,5 +143,51 @@ public abstract class QuadrilateralizedMesh<TSuper, TData> : MonoBehaviour where
     private enum State
     {
         Split, Splitting, Active, Waiting, Ready, Generating, Initial
+    }
+
+    public class MeshWorker : IDisposable
+    {
+        private Queue<TSuper> meshQueue;
+        private Thread workingThread;
+        private CancellationTokenSource cancellationTokenSource;
+        private bool isDisposed;
+
+        public MeshWorker()
+        {
+            meshQueue = new Queue<TSuper>();
+            cancellationTokenSource = new CancellationTokenSource();
+            workingThread = new Thread(GenerateMeshDataContinuously);
+
+            workingThread.Start();
+        }
+
+        public void Dispose()
+        {
+            if (isDisposed) return;
+
+            isDisposed = true;
+
+            cancellationTokenSource.Cancel();
+            workingThread.Join();
+            cancellationTokenSource.Dispose();
+        }
+
+        public void ScheduleMeshData(TSuper node) => meshQueue.Enqueue(node);
+
+        private void GenerateMeshDataContinuously()
+        {
+            while (!cancellationTokenSource.IsCancellationRequested)
+            {
+                if (meshQueue.TryDequeue(out TSuper node))
+                {
+                    node.data = node.CreateMeshData();
+                    node.state = State.Ready;
+
+                    continue;
+                }
+
+                Thread.Sleep(100);
+            }
+        }
     }
 }
