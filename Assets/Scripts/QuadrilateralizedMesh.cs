@@ -57,15 +57,24 @@ public abstract class QuadrilateralizedMesh<TSuper, TData> : MonoBehaviour where
 
         if (nwChild.state is not State.Active || neChild.state is not State.Active || seChild.state is not State.Active || swChild.state is not State.Active) return false;
 
-        Destroy(nwChild);
-        Destroy(neChild);
-        Destroy(seChild);
-        Destroy(swChild);
+        DestroyChild(ref nwChild);
+        DestroyChild(ref neChild);
+        DestroyChild(ref seChild);
+        DestroyChild(ref swChild);
         ToggleVisibility(true);
 
         state = State.Active;
 
         return true;
+    }
+
+    private void DestroyChild(ref TSuper child)
+    {
+        child.data = default;
+
+        child.DestroySelf();
+
+        child = null;
     }
 
     private bool TryStartSplitting()
@@ -86,6 +95,8 @@ public abstract class QuadrilateralizedMesh<TSuper, TData> : MonoBehaviour where
         TSuper child = CreateChild(quadrant);
 
         child.state = State.Initial;
+
+        child.transform.SetParent(transform);
 
         return child;
     }
@@ -135,6 +146,13 @@ public abstract class QuadrilateralizedMesh<TSuper, TData> : MonoBehaviour where
     /// <remarks>Will be called from the Unity thread!</remarks>
     /// <returns></returns>
     protected abstract bool TryCreateMesh(TData data);
+
+    /// <summary>
+    /// </summary>
+    /// <param name="data"></param>
+    /// <remarks>Will be called from the Unity thread!</remarks>
+    /// <returns></returns>
+    protected abstract void DestroySelf();
     protected abstract MeshWorker GetMeshWorker();
     protected abstract bool CanRecurse();
     protected abstract TSuper CreateChild(Quadrant quadrant);
