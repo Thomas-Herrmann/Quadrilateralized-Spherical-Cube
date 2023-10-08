@@ -18,7 +18,7 @@ public class QuadrilateralizedSphericalCubeMesh : MonoBehaviour
     }
 
     // Unity Message
-    void Start()
+    private void Start()
     {
         var faces = Enum.GetValues(typeof(CubeFace));
         var index = 0;
@@ -27,13 +27,32 @@ public class QuadrilateralizedSphericalCubeMesh : MonoBehaviour
         meshParameters = new Parameters();
         faceMeshes = new QuadrilateralizedSphericalCubeFaceMesh[faces.Length];
 
-        foreach (CubeFace face in faces) faceMeshes[index++] = QuadrilateralizedSphericalCubeFaceMesh.CreateInstance(meshParameters, configuration, face);
+        var meshWorker = new QuadrilateralizedSphericalCubeFaceMesh.MeshWorker();
+
+        foreach (CubeFace face in faces)
+        {
+            var faceMesh = QuadrilateralizedSphericalCubeFaceMesh.CreateInstance(meshParameters, configuration, face, meshWorker);
+
+            faceMesh.transform.SetParent(transform);
+
+            faceMeshes[index++] = faceMesh;
+        }
     }
 
     // Unity Message
-    void Update()
+    private void Update()
     {
         meshParameters.RenderOrigin = camera.transform.position;
+
+        foreach (QuadrilateralizedSphericalCubeFaceMesh faceMesh in faceMeshes) faceMesh.ActivateMesh();
+    }
+
+    // Unity Message
+    private void OnDestroy()
+    {
+        if (faceMeshes is null) return;
+
+        foreach (QuadrilateralizedSphericalCubeFaceMesh faceMesh in faceMeshes) Destroy(faceMesh);
     }
 
     public record Parameters

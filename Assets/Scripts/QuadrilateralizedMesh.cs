@@ -26,7 +26,7 @@ public abstract class QuadrilateralizedMesh<TSuper, TData> : MonoBehaviour where
     {
         bool changesWereMade = TryUpdate();
 
-        if (!changesWereMade && state is State.Active) 
+        if (!changesWereMade && state is State.Active && IsUpdating) 
             IsUpdating = false;
         else if (changesWereMade) 
             IsUpdating = state is State.Split;
