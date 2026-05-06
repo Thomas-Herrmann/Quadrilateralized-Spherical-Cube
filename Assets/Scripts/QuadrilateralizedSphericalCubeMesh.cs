@@ -7,6 +7,7 @@ public class QuadrilateralizedSphericalCubeMesh : MonoBehaviour
     private QuadTreeConfiguration configuration;
     private Parameters meshParameters;
     private new Camera camera;
+    private QuadrilateralizedSphericalCubeFaceMesh.MeshWorker meshWorker;
 
     public static QuadrilateralizedSphericalCubeMesh CreateInstance(QuadTreeConfiguration configuration)
     {
@@ -24,10 +25,12 @@ public class QuadrilateralizedSphericalCubeMesh : MonoBehaviour
         var index = 0;
 
         camera = GetComponent<Camera>();
+
+        if (camera == null) camera = Camera.main;
+
         meshParameters = new Parameters();
         faceMeshes = new QuadrilateralizedSphericalCubeFaceMesh[faces.Length];
-
-        var meshWorker = new QuadrilateralizedSphericalCubeFaceMesh.MeshWorker();
+        meshWorker = new QuadrilateralizedSphericalCubeFaceMesh.MeshWorker();
 
         foreach (CubeFace face in faces)
         {
@@ -50,6 +53,8 @@ public class QuadrilateralizedSphericalCubeMesh : MonoBehaviour
     // Unity Message
     private void OnDestroy()
     {
+        meshWorker?.Dispose();
+
         if (faceMeshes is null) return;
 
         foreach (QuadrilateralizedSphericalCubeFaceMesh faceMesh in faceMeshes) Destroy(faceMesh);

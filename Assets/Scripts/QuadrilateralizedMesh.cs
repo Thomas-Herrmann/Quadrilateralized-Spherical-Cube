@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -122,6 +123,8 @@ public abstract class QuadrilateralizedMesh<TSuper, TData> : MonoBehaviour where
         swChild.ActivateMesh();
         ToggleVisibility(false);
 
+        state = State.Split;
+
         return true;
     }
 
@@ -158,21 +161,21 @@ public abstract class QuadrilateralizedMesh<TSuper, TData> : MonoBehaviour where
     protected abstract TSuper CreateChild(Quadrant quadrant);
     public abstract void ToggleVisibility(bool visible);
 
-    private enum State
+    protected enum State
     {
-        Split, Splitting, Active, Waiting, Ready, Generating, Initial
+        Initial, Split, Splitting, Active, Waiting, Ready, Generating
     }
 
     public class MeshWorker : IDisposable
     {
-        private Queue<TSuper> meshQueue;
+        private ConcurrentQueue<TSuper> meshQueue;
         private Thread workingThread;
         private CancellationTokenSource cancellationTokenSource;
         private bool isDisposed;
 
         public MeshWorker()
         {
-            meshQueue = new Queue<TSuper>();
+            meshQueue = new ConcurrentQueue<TSuper>();
             cancellationTokenSource = new CancellationTokenSource();
             workingThread = new Thread(GenerateMeshDataContinuously);
 
