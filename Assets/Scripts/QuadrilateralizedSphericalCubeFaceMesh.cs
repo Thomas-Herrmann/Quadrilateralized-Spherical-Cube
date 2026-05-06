@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 
 public class QuadrilateralizedSphericalCubeFaceMesh : QuadrilateralizedMesh<QuadrilateralizedSphericalCubeFaceMesh, QuadrilateralizedSphericalCubeFaceMesh.MeshData>
@@ -21,7 +21,7 @@ public class QuadrilateralizedSphericalCubeFaceMesh : QuadrilateralizedMesh<Quad
         meshRenderer.enabled = visible;
     }
 
-    protected override bool CanRecurse() => configuration.MaximumDepth >= depth && configuration.MaximumDistance >= Vector3.Distance(meshParameters.RenderOrigin, transform.TransformPoint(unnormalizedCenter.normalized));
+    protected override bool CanRecurse() => configuration.MaximumDepth > depth && (configuration.MaximumDistance * sideLength) >= Vector3.Distance(meshParameters.RenderOrigin, transform.TransformPoint(unnormalizedCenter.normalized));
 
     protected override QuadrilateralizedSphericalCubeFaceMesh CreateChild(Quadrant quadrant)
     {
@@ -37,6 +37,7 @@ public class QuadrilateralizedSphericalCubeFaceMesh : QuadrilateralizedMesh<Quad
         child.sideLength = sideLength / 2f;
 
         child.nwCorner = GetNwCorner(quadrant);
+        child.unnormalizedCenter = normal + (child.nwCorner.x + child.sideLength / 2f) * horizontalAxis + (child.nwCorner.y + child.sideLength / 2f) * verticalAxis;
 
         return child;
     }
@@ -44,9 +45,9 @@ public class QuadrilateralizedSphericalCubeFaceMesh : QuadrilateralizedMesh<Quad
     private Vector2 GetNwCorner(Quadrant quadrant) => quadrant switch
     {
         Quadrant.NorthWest => nwCorner,
-        Quadrant.NorthEast => nwCorner + new Vector2(sideLength / 2f, 0),
-        Quadrant.SouthEast => nwCorner + new Vector2(0, sideLength / 2f),
-        Quadrant.SouthWest => nwCorner + new Vector2(sideLength / 2f, sideLength / 2f),
+        Quadrant.NorthEast => nwCorner + new Vector2(sideLength / 2f, 0f),
+        Quadrant.SouthWest => nwCorner + new Vector2(0f, sideLength / 2f),
+        Quadrant.SouthEast => nwCorner + new Vector2(sideLength / 2f, sideLength / 2f),
         _ => throw new ArgumentOutOfRangeException(nameof(Quadrant)),
     };
 
@@ -61,7 +62,8 @@ public class QuadrilateralizedSphericalCubeFaceMesh : QuadrilateralizedMesh<Quad
         faceMesh.horizontalAxis = new Vector3(faceMesh.normal.y, faceMesh.normal.z, faceMesh.normal.x);
         faceMesh.verticalAxis = Vector3.Cross(faceMesh.normal, faceMesh.horizontalAxis);
         faceMesh.nwCorner = new Vector2(-1, -1);
-        faceMesh.sideLength = 1;
+        faceMesh.sideLength = 2;
+        faceMesh.unnormalizedCenter = faceMesh.normal;
 
         return faceMesh;
     }
