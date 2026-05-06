@@ -21,7 +21,7 @@ public class QuadrilateralizedSphericalCubeFaceMesh : QuadrilateralizedMesh<Quad
         meshRenderer.enabled = visible;
     }
 
-    protected override bool CanRecurse() => configuration.MaximumDepth > depth && (configuration.MaximumDistance * sideLength) >= Vector3.Distance(meshParameters.RenderOrigin, transform.TransformPoint(unnormalizedCenter.normalized));
+    protected override bool CanRecurse() => configuration.MaximumDepth > depth && (configuration.MaximumDistance * sideLength * configuration.Radius) >= Vector3.Distance(meshParameters.RenderOrigin, transform.TransformPoint(unnormalizedCenter.normalized * configuration.Radius));
 
     protected override QuadrilateralizedSphericalCubeFaceMesh CreateChild(Quadrant quadrant)
     {
@@ -114,7 +114,7 @@ public class QuadrilateralizedSphericalCubeFaceMesh : QuadrilateralizedMesh<Quad
                 float noiseVal = EvaluateNoise(dir);
                 float elevation = Mathf.Lerp(configuration.MinElevation, configuration.MaxElevation, noiseVal);
 
-                vertices[vertexIndex] = dir * elevation;
+                vertices[vertexIndex] = dir * (configuration.Radius * elevation);
             }
         }
 

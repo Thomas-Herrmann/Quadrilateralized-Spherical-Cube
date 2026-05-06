@@ -10,6 +10,7 @@ public record QuadTreeConfiguration : ThreadSafeConfiguration
     private float maxElevation;
     private float noiseScale;
     private int noiseOctaves;
+    private float radius;
 
     public int MaximumDepth 
     {
@@ -50,6 +51,12 @@ public record QuadTreeConfiguration : ThreadSafeConfiguration
     {
         get => GetThreadSafe(ref noiseOctaves);
         set => SetThreadSafe(ref noiseOctaves, value);
+    }
+
+    public float Radius
+    {
+        get => GetThreadSafe(ref radius);
+        set => SetThreadSafe(ref radius, value);
     }
 
     protected override void ReleaseResources()

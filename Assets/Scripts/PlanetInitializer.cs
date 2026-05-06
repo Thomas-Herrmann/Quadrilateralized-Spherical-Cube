@@ -6,6 +6,7 @@ public sealed class PlanetInitializer : MonoBehaviour
     [SerializeField] private int maximumDepth = 5;
     [SerializeField] private float maximumDistance = 5f;
     [SerializeField] private int meshResolution = 16;
+    [SerializeField] private float planetRadius = 1f;
 
     [Header("Terrain Generation")]
     [SerializeField] private float minElevation = 1.0f;
@@ -19,6 +20,7 @@ public sealed class PlanetInitializer : MonoBehaviour
     private int lastMaximumDepth;
     private float lastMaximumDistance;
     private int lastMeshResolution;
+    private float lastPlanetRadius;
     private float lastMinElevation;
     private float lastMaxElevation;
     private float lastNoiseScale;
@@ -30,6 +32,7 @@ public sealed class PlanetInitializer : MonoBehaviour
         configuration.MaximumDepth = maximumDepth;
         configuration.MaximumDistance = maximumDistance;
         configuration.MeshResolution = meshResolution;
+        configuration.Radius = planetRadius;
         configuration.MinElevation = minElevation;
         configuration.MaxElevation = maxElevation;
         configuration.NoiseScale = noiseScale;
@@ -38,6 +41,7 @@ public sealed class PlanetInitializer : MonoBehaviour
         lastMaximumDepth = maximumDepth;
         lastMaximumDistance = maximumDistance;
         lastMeshResolution = meshResolution;
+        lastPlanetRadius = planetRadius;
         lastMinElevation = minElevation;
         lastMaxElevation = maxElevation;
         lastNoiseScale = noiseScale;
@@ -65,6 +69,12 @@ public sealed class PlanetInitializer : MonoBehaviour
         {
             configuration.MeshResolution = meshResolution;
             lastMeshResolution = meshResolution;
+        }
+
+        if (lastPlanetRadius != planetRadius)
+        {
+            configuration.Radius = planetRadius;
+            lastPlanetRadius = planetRadius;
         }
 
         if (lastMinElevation != minElevation)
