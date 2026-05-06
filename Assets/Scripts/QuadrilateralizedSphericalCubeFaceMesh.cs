@@ -110,12 +110,70 @@ public class QuadrilateralizedSphericalCubeFaceMesh : QuadrilateralizedMesh<Quad
                 float x = column / (float)(resolution - 1);
                 float y = row / (float)(resolution - 1);
                 Vector3 unitCubeCoordinate = normal + (sideLength * x + nwCorner.x) * horizontalAxis + (sideLength * y + nwCorner.y) * verticalAxis;
+                Vector3 dir = unitCubeCoordinate.normalized;
+                float noiseVal = EvaluateNoise(dir);
+                float elevation = Mathf.Lerp(configuration.MinElevation, configuration.MaxElevation, noiseVal);
 
-                vertices[vertexIndex] = unitCubeCoordinate.normalized;
+                vertices[vertexIndex] = dir * elevation;
             }
         }
 
         return vertices;
+    }
+
+    private float EvaluateNoise(Vector3 point)
+    {
+        float noise = 0f;
+        float amplitude = 1f;
+        float frequency = configuration.NoiseScale;
+        float maxValue = 0f;
+
+        for (int i = 0; i < configuration.NoiseOctaves; i++)
+        {
+            noise += SimpleValueNoise3D(point * frequency) * amplitude;
+            maxValue += amplitude;
+
+            amplitude *= 0.5f;
+            frequency *= 2.0f;
+        }
+
+        return noise / maxValue;
+    }
+
+    private static float SimpleValueNoise3D(Vector3 p)
+    {
+        int xi = Mathf.FloorToInt(p.x);
+        int yi = Mathf.FloorToInt(p.y);
+        int zi = Mathf.FloorToInt(p.z);
+
+        float xf = p.x - xi;
+        float yf = p.y - yi;
+        float zf = p.z - zi;
+
+        float u = xf * xf * (3f - 2f * xf);
+        float v = yf * yf * (3f - 2f * yf);
+        float w = zf * zf * (3f - 2f * zf);
+
+        float x0 = Lerp(Hash(xi, yi, zi), Hash(xi + 1, yi, zi), u);
+        float x1 = Lerp(Hash(xi, yi + 1, zi), Hash(xi + 1, yi + 1, zi), u);
+        float x2 = Lerp(Hash(xi, yi, zi + 1), Hash(xi + 1, yi, zi + 1), u);
+        float x3 = Lerp(Hash(xi, yi + 1, zi + 1), Hash(xi + 1, yi + 1, zi + 1), u);
+
+        float y0 = Lerp(x0, x1, v);
+        float y1 = Lerp(x2, x3, v);
+
+        return Lerp(y0, y1, w);
+    }
+
+    private static float Lerp(float a, float b, float t) => a + t * (b - a);
+
+    private static float Hash(int x, int y, int z)
+    {
+        uint h = (uint)(x * 73856093 ^ y * 19349663 ^ z * 83492791);
+        h = (h ^ (h >> 16)) * 0x85ebca6b;
+        h = (h ^ (h >> 13)) * 0xc2b2ae35;
+        h ^= h >> 16;
+        return (h & 0xFFFFFF) / (float)0xFFFFFF;
     }
 
     protected override bool TryCreateMesh(MeshData data)
